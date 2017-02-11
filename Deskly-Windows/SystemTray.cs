@@ -7,6 +7,9 @@ using System.Drawing;
 using System.Windows.Forms;
 using EasyHttp.Http;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using System.Net;
+using System.IO;
 
 namespace Deskly_Windows
 {
@@ -22,7 +25,9 @@ namespace Deskly_Windows
             // Create a simple tray menu with only one item.
             trayMenu = new ContextMenu();
             generateMenuItem = trayMenu.MenuItems.Add("Generate Wallpaper", OnGenerate);
-            trayMenu.MenuItems.Add("Copy Wallpaper path", OnCopyPath);
+            trayMenu.MenuItems.Add("-");
+            trayMenu.MenuItems.Add("Copy Wallpaper Path", OnCopyPath);
+            trayMenu.MenuItems.Add("Copy Wallpaper Image", OnCopyImage);
             trayMenu.MenuItems.Add("-");
             trayMenu.MenuItems.Add("Preferences");
             trayMenu.MenuItems.Add("-");
@@ -46,25 +51,39 @@ namespace Deskly_Windows
 
         private void OnCopyPath(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            Clipboard.SetText(Path.GetTempPath() + "/Deskly.jpg", TextDataFormat.Text);
         }
-
+        private void OnCopyImage(object sender, EventArgs e)
+        {
+            Clipboard.SetImage(Image.FromFile(Path.GetTempPath() + "/Deskly.jpg"));
+        }
+            
         private void attemptGenerateWallpaper(int attempts, int maxAttempts)
         {
             generateMenuItem.Enabled = false;
             if (attempts++ < maxAttempts)
             {
-                System.Console.WriteLine("Attempt #" + attempts + "/" + maxAttempts + " to generate wallpaper from /r/earthporn");
+                Console.WriteLine("Attempt #" + attempts + "/" + maxAttempts + " to generate wallpaper from /r/earthporn");
 
                 HttpClient http = new HttpClient();
                 http.Request.Accept = HttpContentTypes.ApplicationJson;
                 HttpResponse response = http.Get("https://www.reddit.com/r/earthporn/.json?sort=hot&limit=50");
+
                 JObject o = JObject.Parse(response.RawText);
                 JToken[] posts = o["data"]["children"].ToArray();
                 JToken post = posts[new Random().Next(0, posts.Length)];
 
-                string id = post.;
+                JObject oo = JObject.Parse(post.ToString());    
+                JToken imgUrl = oo["data"]["preview"]["images"].First["source"]["url"];
+                Uri imgUri = new Uri(imgUrl.ToString());
 
+                using (var client = new WebClient())
+                {
+                    client.DownloadFile(imgUrl.ToString(), Path.GetTempPath() + "/Deskly.jpg");
+                }
+                
+               Wallpaper.Set(imgUri, Wallpaper.Style.Fill);
+                generateMenuItem.Enabled = true;
             }
         }
 
@@ -90,6 +109,24 @@ namespace Deskly_Windows
         private void OnQuit(object sender, EventArgs e)
         {
             Application.Exit();
+        }
+
+        private void InitializeComponent()
+        {
+            this.SuspendLayout();
+            // 
+            // SystemTray
+            // 
+            this.ClientSize = new System.Drawing.Size(284, 261);
+            this.Name = "SystemTray";
+            this.Load += new System.EventHandler(this.SystemTray_Load);
+            this.ResumeLayout(false);
+
+        }
+
+        private void SystemTray_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
