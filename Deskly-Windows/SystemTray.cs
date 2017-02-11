@@ -25,7 +25,9 @@ namespace Deskly_Windows
             // Create a simple tray menu with only one item.
             trayMenu = new ContextMenu();
             generateMenuItem = trayMenu.MenuItems.Add("Generate Wallpaper", OnGenerate);
-            trayMenu.MenuItems.Add("Copy Wallpaper path", OnCopyPath);
+            trayMenu.MenuItems.Add("-");
+            trayMenu.MenuItems.Add("Copy Wallpaper Path", OnCopyPath);
+            trayMenu.MenuItems.Add("Copy Wallpaper Image", OnCopyImage);
             trayMenu.MenuItems.Add("-");
             trayMenu.MenuItems.Add("Preferences");
             trayMenu.MenuItems.Add("-");
@@ -49,9 +51,13 @@ namespace Deskly_Windows
 
         private void OnCopyPath(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            Clipboard.SetText(Path.GetTempPath() + "/Deskly.jpg", TextDataFormat.Text);
         }
-
+        private void OnCopyImage(object sender, EventArgs e)
+        {
+            Clipboard.SetImage(Image.FromFile(Path.GetTempPath() + "/Deskly.jpg"));
+        }
+            
         private void attemptGenerateWallpaper(int attempts, int maxAttempts)
         {
             generateMenuItem.Enabled = false;
@@ -71,7 +77,12 @@ namespace Deskly_Windows
                 JToken imgUrl = oo["data"]["preview"]["images"].First["source"]["url"];
                 Uri imgUri = new Uri(imgUrl.ToString());
 
-                Wallpaper.Set(imgUri, Wallpaper.Style.Fill);
+                using (var client = new WebClient())
+                {
+                    client.DownloadFile(imgUrl.ToString(), Path.GetTempPath() + "/Deskly.jpg");
+                }
+                
+               Wallpaper.Set(imgUri, Wallpaper.Style.Fill);
                 generateMenuItem.Enabled = true;
             }
         }
