@@ -45,12 +45,12 @@ namespace Deskly_Windows
             trayIcon.Visible = true;
         }
 
+
         private void OnGenerate(object sender, EventArgs e)
         {
             attemptGenerateWallpaper(0, 5);
         }
-
-        private void OnCopyPath(object sender, EventArgs e)
+        private string getWallpaper()
         {
             RegistryKey regKey = Registry.CurrentUser.OpenSubKey("Control Panel\\Desktop", false);
             string wallpaper = regKey.GetValue("WallPaper").ToString();
@@ -58,21 +58,28 @@ namespace Deskly_Windows
             if (!File.Exists(wallpaper))
             {
                 MessageBox.Show("Wallpaper was not found in the directory. Regenerate and try again.");
-                return;
+                return null;
             }
-            Clipboard.SetText(wallpaper, TextDataFormat.Text);
+            return wallpaper;
+        }
+        private void OnCopyPath(object sender, EventArgs e)
+        {
+            try
+            {
+                Clipboard.SetText(getWallpaper(), TextDataFormat.Text);
+            } catch (Exception ex)
+            {
+                MessageBox.Show("Wallpaper was not found in the directory. Regenerate and try again.");
+            }
         }
         private void OnCopyImage(object sender, EventArgs e)
         {
-            RegistryKey regKey = Registry.CurrentUser.OpenSubKey("Control Panel\\Desktop", false);
-            string wallpaper = regKey.GetValue("WallPaper").ToString();
-            regKey.Close();
-            if (!File.Exists(wallpaper))
+            try {
+                Clipboard.SetImage(Image.FromFile(getWallpaper()));
+            } catch (Exception ex)
             {
                 MessageBox.Show("Wallpaper was not found in the directory. Regenerate and try again.");
-                return;
             }
-            Clipboard.SetImage(Image.FromFile(wallpaper));
         }
             
         public void OnSettings(object sender, EventArgs e)
