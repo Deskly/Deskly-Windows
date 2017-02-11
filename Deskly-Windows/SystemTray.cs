@@ -10,6 +10,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using System.Net;
 using System.IO;
+using Microsoft.Win32;
 
 namespace Deskly_Windows
 {
@@ -44,18 +45,41 @@ namespace Deskly_Windows
             trayIcon.Visible = true;
         }
 
+
         private void OnGenerate(object sender, EventArgs e)
         {
             attemptGenerateWallpaper(0, 5);
         }
-
+        private string getWallpaper()
+        {
+            RegistryKey regKey = Registry.CurrentUser.OpenSubKey("Control Panel\\Desktop", false);
+            string wallpaper = regKey.GetValue("WallPaper").ToString();
+            regKey.Close();
+            if (!File.Exists(wallpaper))
+            {
+                MessageBox.Show("Wallpaper was not found in the directory. Regenerate and try again.");
+                return null;
+            }
+            return wallpaper;
+        }
         private void OnCopyPath(object sender, EventArgs e)
         {
-            Clipboard.SetText(Path.GetTempPath() + "/Deskly.jpg", TextDataFormat.Text);
+            try
+            {
+                Clipboard.SetText(getWallpaper(), TextDataFormat.Text);
+            } catch (Exception ex)
+            {
+                MessageBox.Show("Wallpaper was not found in the directory. Regenerate and try again.");
+            }
         }
         private void OnCopyImage(object sender, EventArgs e)
         {
-            Clipboard.SetImage(Image.FromFile(Path.GetTempPath() + "/Deskly.jpg"));
+            try {
+                Clipboard.SetImage(Image.FromFile(getWallpaper()));
+            } catch (Exception ex)
+            {
+                MessageBox.Show("Wallpaper was not found in the directory. Regenerate and try again.");
+            }
         }
             
         public void OnSettings(object sender, EventArgs e)
@@ -89,16 +113,16 @@ namespace Deskly_Windows
                     JToken imgUrl = oo["data"]["preview"]["images"].First["source"]["url"];
                     Uri imgUri = new Uri(imgUrl.ToString());
 
-                    using (var client = new WebClient())
+                    /*using (var client = new WebClient())
                     {
                         client.DownloadFile(imgUrl.ToString(), Path.GetTempPath() + "/Deskly.jpg");
-                    }
-
+                    }*/
                     Wallpaper.Set(imgUri, Wallpaper.Style.Fill);
                     generateMenuItem.Enabled = true;
                 } catch (Exception e)
                 {
-                    MessageBox.Show(e.ToString());
+                    MessageBox.Show("Whoops! The program hiccuped. Try again :)");
+                    generateMenuItem.Enabled = true;
                 }
             }
         }
