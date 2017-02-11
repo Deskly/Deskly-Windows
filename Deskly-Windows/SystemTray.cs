@@ -7,6 +7,8 @@ using System.Drawing;
 using System.Windows.Forms;
 using EasyHttp.Http;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using System.Net;
 
 namespace Deskly_Windows
 {
@@ -63,8 +65,10 @@ namespace Deskly_Windows
                 JToken[] posts = o["data"]["children"].ToArray();
                 JToken post = posts[new Random().Next(0, posts.Length)];
 
-                string id = post.;
-
+                JObject oo = JObject.Parse(post.ToString());
+                JToken imgUrl = oo["data"]["preview"]["images"].First["source"]["url"];
+                new WebClient().DownloadFile("http://www.scottgames.com/4.jpg", filename);
+                SystemParametersInfo(SPI_SETDESKWALLPAPER, 1, filename, SPIF_UPDATEINIFILE);
             }
         }
 
@@ -90,6 +94,24 @@ namespace Deskly_Windows
         private void OnQuit(object sender, EventArgs e)
         {
             Application.Exit();
+        }
+
+        private void InitializeComponent()
+        {
+            this.SuspendLayout();
+            // 
+            // SystemTray
+            // 
+            this.ClientSize = new System.Drawing.Size(284, 261);
+            this.Name = "SystemTray";
+            this.Load += new System.EventHandler(this.SystemTray_Load);
+            this.ResumeLayout(false);
+
+        }
+
+        private void SystemTray_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
