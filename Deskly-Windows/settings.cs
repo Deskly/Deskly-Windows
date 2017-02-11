@@ -32,9 +32,9 @@ namespace Deskly_Windows
             Properties.Settings.Default.nsfw = checkBox1.Checked;
 
             if (!subreddit.StartsWith("/r/"))
-                Properties.Settings.Default.subreddit = "/r/" + textBox1.Text;
+                Properties.Settings.Default.subreddit = "/r/" + Properties.Settings.Default.subreddit;
             if (!subreddit.EndsWith("/"))
-                Properties.Settings.Default.subreddit = textBox1.Text + "/";
+                Properties.Settings.Default.subreddit = Properties.Settings.Default.subreddit + "/";
 
             Properties.Settings.Default.Save();
             Properties.Settings.Default.Reload();

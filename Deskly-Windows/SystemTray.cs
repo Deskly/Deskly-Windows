@@ -74,7 +74,12 @@ namespace Deskly_Windows
 
                     HttpClient http = new HttpClient();
                     http.Request.Accept = HttpContentTypes.ApplicationJson;
-                    HttpResponse response = http.Get("https://www.reddit.com/" + Properties.Settings.Default.subreddit + "/.json?sort=hot&limit=50");
+
+                    string nsfw = "";
+                    if (!Properties.Settings.Default.nsfw)
+                        nsfw = "&nsfw=false";
+                    
+                    HttpResponse response = http.Get("https://www.reddit.com/" + Properties.Settings.Default.subreddit + "/.json?sort=hot&limit=50" + nsfw);
 
                     JObject o = JObject.Parse(response.RawText);
                     JToken[] posts = o["data"]["children"].ToArray();
@@ -93,7 +98,7 @@ namespace Deskly_Windows
                     generateMenuItem.Enabled = true;
                 } catch (Exception e)
                 {
-
+                    MessageBox.Show(e.ToString());
                 }
             }
         }
