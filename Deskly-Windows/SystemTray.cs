@@ -29,7 +29,7 @@ namespace Deskly_Windows
             trayMenu.MenuItems.Add("Copy Wallpaper Path", OnCopyPath);
             trayMenu.MenuItems.Add("Copy Wallpaper Image", OnCopyImage);
             trayMenu.MenuItems.Add("-");
-            trayMenu.MenuItems.Add("Preferences");
+            trayMenu.MenuItems.Add("Settings", OnSettings);
             trayMenu.MenuItems.Add("-");
             trayMenu.MenuItems.Add("Quit", OnQuit);
 
@@ -58,32 +58,48 @@ namespace Deskly_Windows
             Clipboard.SetImage(Image.FromFile(Path.GetTempPath() + "/Deskly.jpg"));
         }
             
+        public void OnSettings(object sender, EventArgs e)
+        {
+            settings Settings = new settings();
+            Settings.Show();
+        }
         private void attemptGenerateWallpaper(int attempts, int maxAttempts)
         {
             generateMenuItem.Enabled = false;
             if (attempts++ < maxAttempts)
             {
-                Console.WriteLine("Attempt #" + attempts + "/" + maxAttempts + " to generate wallpaper from /r/earthporn");
-
-                HttpClient http = new HttpClient();
-                http.Request.Accept = HttpContentTypes.ApplicationJson;
-                HttpResponse response = http.Get("https://www.reddit.com/r/earthporn/.json?sort=hot&limit=50");
-
-                JObject o = JObject.Parse(response.RawText);
-                JToken[] posts = o["data"]["children"].ToArray();
-                JToken post = posts[new Random().Next(0, posts.Length)];
-
-                JObject oo = JObject.Parse(post.ToString());    
-                JToken imgUrl = oo["data"]["preview"]["images"].First["source"]["url"];
-                Uri imgUri = new Uri(imgUrl.ToString());
-
-                using (var client = new WebClient())
+                try
                 {
-                    client.DownloadFile(imgUrl.ToString(), Path.GetTempPath() + "/Deskly.jpg");
+                    Console.WriteLine("Attempt #" + attempts + "/" + maxAttempts + " to generate wallpaper from /r/earthporn");
+
+                    HttpClient http = new HttpClient();
+                    http.Request.Accept = HttpContentTypes.ApplicationJson;
+
+                    string nsfw = "";
+                    if (!Properties.Settings.Default.nsfw)
+                        nsfw = "&nsfw=false";
+                    
+                    HttpResponse response = http.Get("https://www.reddit.com/" + Properties.Settings.Default.subreddit + "/.json?sort=hot&limit=50" + nsfw);
+
+                    JObject o = JObject.Parse(response.RawText);
+                    JToken[] posts = o["data"]["children"].ToArray();
+                    JToken post = posts[new Random().Next(0, posts.Length)];
+
+                    JObject oo = JObject.Parse(post.ToString());
+                    JToken imgUrl = oo["data"]["preview"]["images"].First["source"]["url"];
+                    Uri imgUri = new Uri(imgUrl.ToString());
+
+                    using (var client = new WebClient())
+                    {
+                        client.DownloadFile(imgUrl.ToString(), Path.GetTempPath() + "/Deskly.jpg");
+                    }
+
+                    Wallpaper.Set(imgUri, Wallpaper.Style.Fill);
+                    generateMenuItem.Enabled = true;
+                } catch (Exception e)
+                {
+                    MessageBox.Show(e.ToString());
                 }
-                
-               Wallpaper.Set(imgUri, Wallpaper.Style.Fill);
-                generateMenuItem.Enabled = true;
             }
         }
 
