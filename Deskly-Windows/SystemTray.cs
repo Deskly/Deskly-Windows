@@ -9,6 +9,7 @@ using EasyHttp.Http;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using System.Net;
+using System.IO;
 
 namespace Deskly_Windows
 {
@@ -61,14 +62,16 @@ namespace Deskly_Windows
                 HttpClient http = new HttpClient();
                 http.Request.Accept = HttpContentTypes.ApplicationJson;
                 HttpResponse response = http.Get("https://www.reddit.com/r/earthporn/.json?sort=hot&limit=50");
+
                 JObject o = JObject.Parse(response.RawText);
                 JToken[] posts = o["data"]["children"].ToArray();
                 JToken post = posts[new Random().Next(0, posts.Length)];
 
-                JObject oo = JObject.Parse(post.ToString());
+                JObject oo = JObject.Parse(post.ToString());    
                 JToken imgUrl = oo["data"]["preview"]["images"].First["source"]["url"];
-                new WebClient().DownloadFile("http://www.scottgames.com/4.jpg", filename);
-                SystemParametersInfo(SPI_SETDESKWALLPAPER, 1, filename, SPIF_UPDATEINIFILE);
+                Uri imgUri = new Uri(imgUrl.ToString());
+
+                Wallpaper.Set(imgUri, Wallpaper.Style.Center);
             }
         }
 
