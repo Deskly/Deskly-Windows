@@ -10,6 +10,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using System.Net;
 using System.IO;
+using Microsoft.Win32;
 
 namespace Deskly_Windows
 {
@@ -51,11 +52,27 @@ namespace Deskly_Windows
 
         private void OnCopyPath(object sender, EventArgs e)
         {
-            Clipboard.SetText(Path.GetTempPath() + "/Deskly.jpg", TextDataFormat.Text);
+            RegistryKey regKey = Registry.CurrentUser.OpenSubKey("Control Panel\\Desktop", false);
+            string wallpaper = regKey.GetValue("WallPaper").ToString();
+            regKey.Close();
+            if (!File.Exists(wallpaper))
+            {
+                MessageBox.Show("Wallpaper was not found in the directory. Regenerate and try again.");
+                return;
+            }
+            Clipboard.SetText(wallpaper, TextDataFormat.Text);
         }
         private void OnCopyImage(object sender, EventArgs e)
         {
-            Clipboard.SetImage(Image.FromFile(Path.GetTempPath() + "/Deskly.jpg"));
+            RegistryKey regKey = Registry.CurrentUser.OpenSubKey("Control Panel\\Desktop", false);
+            string wallpaper = regKey.GetValue("WallPaper").ToString();
+            regKey.Close();
+            if (!File.Exists(wallpaper))
+            {
+                MessageBox.Show("Wallpaper was not found in the directory. Regenerate and try again.");
+                return;
+            }
+            Clipboard.SetImage(Image.FromFile(wallpaper));
         }
             
         public void OnSettings(object sender, EventArgs e)
@@ -89,16 +106,16 @@ namespace Deskly_Windows
                     JToken imgUrl = oo["data"]["preview"]["images"].First["source"]["url"];
                     Uri imgUri = new Uri(imgUrl.ToString());
 
-                    using (var client = new WebClient())
+                    /*using (var client = new WebClient())
                     {
                         client.DownloadFile(imgUrl.ToString(), Path.GetTempPath() + "/Deskly.jpg");
-                    }
-
+                    }*/
                     Wallpaper.Set(imgUri, Wallpaper.Style.Fill);
                     generateMenuItem.Enabled = true;
                 } catch (Exception e)
                 {
-                    MessageBox.Show(e.ToString());
+                    MessageBox.Show("Whoops! The program hiccuped. Try again :)");
+                    generateMenuItem.Enabled = true;
                 }
             }
         }
