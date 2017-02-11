@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
 using System.Windows.Forms;
+using EasyHttp.Http;
+using Newtonsoft.Json.Linq;
 
 namespace Deskly_Windows
 {
@@ -13,11 +15,13 @@ namespace Deskly_Windows
         private NotifyIcon trayIcon;
         private ContextMenu trayMenu;
 
+        private MenuItem generateMenuItem;
+
         public SystemTray()
         {
             // Create a simple tray menu with only one item.
             trayMenu = new ContextMenu();
-            trayMenu.MenuItems.Add("Generate Wallpaper", OnGenerate);
+            generateMenuItem = trayMenu.MenuItems.Add("Generate Wallpaper", OnGenerate);
             trayMenu.MenuItems.Add("Copy Wallpaper path", OnCopyPath);
             trayMenu.MenuItems.Add("-");
             trayMenu.MenuItems.Add("Preferences");
@@ -37,12 +41,31 @@ namespace Deskly_Windows
 
         private void OnGenerate(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            attemptGenerateWallpaper(0, 5);
         }
 
         private void OnCopyPath(object sender, EventArgs e)
         {
             throw new NotImplementedException();
+        }
+
+        private void attemptGenerateWallpaper(int attempts, int maxAttempts)
+        {
+            generateMenuItem.Enabled = false;
+            if (attempts++ < maxAttempts)
+            {
+                System.Console.WriteLine("Attempt #" + attempts + "/" + maxAttempts + " to generate wallpaper from /r/earthporn");
+
+                HttpClient http = new HttpClient();
+                http.Request.Accept = HttpContentTypes.ApplicationJson;
+                HttpResponse response = http.Get("https://www.reddit.com/r/earthporn/.json?sort=hot&limit=50");
+                JObject o = JObject.Parse(response.RawText);
+                JToken[] posts = o["data"]["children"].ToArray();
+                JToken post = posts[new Random().Next(0, posts.Length)];
+
+                string id = post.;
+
+            }
         }
 
         protected override void OnLoad(EventArgs e)
