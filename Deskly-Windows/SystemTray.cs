@@ -57,7 +57,7 @@ namespace Deskly_Windows
             generateMenuItem.Enabled = false;
             if (attempts++ < maxAttempts)
             {
-                System.Console.WriteLine("Attempt #" + attempts + "/" + maxAttempts + " to generate wallpaper from /r/earthporn");
+                Console.WriteLine("Attempt #" + attempts + "/" + maxAttempts + " to generate wallpaper from /r/earthporn");
 
                 HttpClient http = new HttpClient();
                 http.Request.Accept = HttpContentTypes.ApplicationJson;
@@ -71,7 +71,8 @@ namespace Deskly_Windows
                 JToken imgUrl = oo["data"]["preview"]["images"].First["source"]["url"];
                 Uri imgUri = new Uri(imgUrl.ToString());
 
-                Wallpaper.Set(imgUri, Wallpaper.Style.Center);
+                Wallpaper.Set(imgUri, Wallpaper.Style.Fill);
+                generateMenuItem.Enabled = true;
             }
         }
 
